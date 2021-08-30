@@ -17,6 +17,7 @@ show_t = 0
 bg_frame = 0
 bg_count = 0
 acc_bgr = np.zeros(shape=(height, width, 3), dtype=np.float32)
+bkg_sub = np.zeros(shape=(height, width, 3), dtype=np.uint8)
 
 #Run Video
 while True:
@@ -57,13 +58,32 @@ while True:
             bg_frame += 1
             cv2.accumulate(frame, acc_bgr)
 
-    if not current_frame == 0:
-        cv2.imshow('sub', cv2.bitwise_and(imgP, imgC))
+
+    TH = 40
+    bkg_bgr = acc_bgr/bg_frame
+    blur = cv2.GaussianBlur(frame, (5, 5), 0.0)
+    diff_bgr = np.uint8(cv2.absdiff(np.float32(blur), bkg_bgr))
+    db, dg, dr = cv2.split(diff_bgr)
+    ret, bb = cv2.threshold(db, TH, 255, cv2.THRESH_BINARY)
+    ret, bg = cv2.threshold(dg, TH, 255, cv2.THRESH_BINARY)
+    ret, br = cv2.threshold(dr, TH, 255, cv2.THRESH_BINARY)
+    bImage = cv2.bitwise_or(bb, bg)
+    bImage = cv2.bitwise_or(br, bImage)
+    bImage = cv2.erode(bImage, None, 5)
+    bImage = cv2.dilate(bImage, None, 5)
+    bImage = cv2.erode(bImage, None, 7)
+    cv2.imshow('bImage', bImage)
+    msk = bImage.copy()
+
+    msk = cv2.bitwise_not(msk)
+    cv2.bitwise_or(bkg_sub, frame, mask=msk)
+
+    cv2.imshow('bImage', bkg_sub)
     cv2.imshow('frame', frame_c)
     current_frame += 1
     imgP = imgC.copy() #Previous Frame
     P_Hist = C_Hist #Previous Frame Histogram
-    key = cv2.waitKey(0)
+    key = cv2.waitKey(10)
     if key == 27:
         break
 
