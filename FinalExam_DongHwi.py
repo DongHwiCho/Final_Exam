@@ -17,7 +17,7 @@ show_t = 0
 bg_frame = 0
 bg_count = 0
 acc_bgr = np.zeros(shape=(height, width, 3), dtype=np.float32)
-bkg_sub = np.zeros(shape=(height, width, 3), dtype=np.uint8)
+bkg_sub = cv2.createBackgroundSubtractorMOG2()
 
 #Run Video
 while True:
@@ -50,14 +50,17 @@ while True:
             
             #if shot changed, Save Background Image
             cv2.imwrite('./Background{}.png'.format(bg_count), cv2.convertScaleAbs(acc_bgr/bg_frame))
+            bkg_sub = cv2.createBackgroundSubtractorMOG2()
             acc_bgr = np.zeros(shape=(height, width, 3), dtype=np.float32)
-            bkg_sub = np.zeros(shape=(height, width, 3), dtype=np.uint8)
             bg_frame = 0
             bg_count += 1
         else:
             #background export
             bg_frame += 1
-            cv2.accumulate(frame, acc_bgr)
+            blur = cv2.GaussianBlur(frame, (5, 5), 0.0)
+            bImage = bkg_sub.apply(blur)
+            ret, bImage = cv2.threshold(bImage, 20, 255, cv2.THRESH_BINARY_INV)
+            cv2.accumulate(cv2.bitwise_and(frame, frame, mask=bImage), acc_bgr)
 
     cv2.imshow('frame', frame_c)
     current_frame += 1
