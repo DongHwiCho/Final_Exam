@@ -62,11 +62,6 @@ while True:
             ret, bImage = cv2.threshold(bImage, 20, 255, cv2.THRESH_BINARY_INV)
             cv2.accumulate(cv2.bitwise_and(frame, frame, mask=bImage), acc_bgr)
 
-    if not current_frame == 0:
-        blur = cv2.GaussianBlur(frame, (5, 5), 0.0)
-        bImage = bkg_sub.apply(blur)
-        ret, bImage = cv2.threshold(bImage, 40, 255, cv2.THRESH_BINARY_INV)
-        cv2.imshow('bImage', cv2.bitwise_and(frame, frame, mask=bImage))
     cv2.imshow('frame', frame_c)
     current_frame += 1
     imgP = imgC.copy() #Previous Frame
