@@ -41,7 +41,7 @@ while True:
     C_Hist = cv2.calcHist([imgC], [0], None, [256], [0, 256]) #Current Frame Histogram
     if not current_frame == 0:
         diff_Hist = C_Hist - P_Hist #Histogram substract
-        print('current_frame = {}, diff = {}'.format(current_frame, np.abs(diff_Hist).sum()))
+        # print('current_frame = {}, diff = {}'.format(current_frame, np.abs(diff_Hist).sum()))
 
         #diff_Hist over 100000 is shot changed
         if np.abs(diff_Hist).sum() > 100000:
@@ -62,11 +62,21 @@ while True:
             ret, bImage = cv2.threshold(bImage, 20, 255, cv2.THRESH_BINARY_INV)
             cv2.accumulate(cv2.bitwise_and(frame, frame, mask=bImage), acc_bgr)
 
+            #Optical Flow
+            if current_frame != 0:
+                contours, hierachy = cv2.findContours(cv2.bitwise_not(bImage), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+                flow = cv2.calcOpticalFlowFarneback(imgP, imgC, None, 0.5, 3, 15, 3, 5, 1.2, 0)
+                for cnt in contours:
+                    area = cv2.contourArea(cnt)
+                    if area > 100:
+                        x, y, width, height = cv2.boundingRect(cnt)
+                        cv2.rectangle(frame_c, (x, y), (x+width, y+height), (0, 0, 255), 2)
+                
     cv2.imshow('frame', frame_c)
     current_frame += 1
     imgP = imgC.copy() #Previous Frame
     P_Hist = C_Hist #Previous Frame Histogram
-    key = cv2.waitKey(10)
+    key = cv2.waitKey(1)
     if key == 27:
         break
 
